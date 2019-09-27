@@ -191,6 +191,9 @@ viewFactory.element.propertyDescriptors = {
             callBacks = Array.isArray(callBacks) ? callBacks : [callBacks];
             return Promise.all(callBacks.map((callBack) => { return callBack(this); }));
           }
+        })
+        .then(() => {
+          return this;
         });
 
       return this;
