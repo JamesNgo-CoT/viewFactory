@@ -129,16 +129,16 @@ viewFactory.element.propertyDescriptors = {
         }
       };
 
-      const renderChildElement = (childElement, docFragment, placeHolder) => {
-        placeHolder = placeHolder || docFragment.appendChild(document.createElement('span'));
+      const renderChildElement = (childElement, placeHolder) => {
+        placeHolder = placeHolder || this.appendChild(document.createElement('span'));
 
         if (Array.isArray(childElement)) {
           placeHolder.parentNode.removeChild(placeHolder);
-          return renderChildElements(childElement, docFragment);
+          return renderChildElements(childElement);
         } else if (typeof childElement === 'function') {
-          return renderChildElement(childElement(this), docFragment, placeHolder);
+          return renderChildElement(childElement(this), placeHolder);
         } else if (childElement instanceof Promise) {
-          return childElement.then((finalChildElement) => { return renderChildElement(finalChildElement, docFragment, placeHolder); });
+          return childElement.then((finalChildElement) => { return renderChildElement(finalChildElement, placeHolder); });
         }
 
         let returnValue;
@@ -160,29 +160,21 @@ viewFactory.element.propertyDescriptors = {
         return returnValue;
       };
 
-      const renderChildElements = (childElements, docFragment) => {
+      const renderChildElements = (childElements) => {
         if (typeof childElements === 'function') {
-          return renderChildElements(childElements(this), docFragment);
+          return renderChildElements(childElements(this));
         } else if (childElements instanceof Promise) {
-          return childElements.then((finalChildElements) => { return renderChildElements(finalChildElements, docFragment); });
+          return childElements.then((finalChildElements) => { return renderChildElements(finalChildElements); });
         } else if (childElements instanceof HTMLElement) {
-          return renderChildElement(childElements, docFragment);
+          return renderChildElement(childElements);
         } else if (Array.isArray(childElements)) {
-          return Promise.all(childElements.map((childElement) => { return renderChildElement(childElement, docFragment); }));
+          return Promise.all(childElements.map((childElement) => { return renderChildElement(childElement); }));
         } else {
-          return renderChildElements([childElements], docFragment);
+          return renderChildElements([childElements]);
         }
       };
 
-      const docFragment = document.createDocumentFragment();
-
-      this.promise = Promise.all([
-        renderAttributes(this._attributes),
-        renderChildElements(this._childElements, docFragment)
-      ])
-        .then(() => {
-          this.appendChild(docFragment);
-        })
+      this.promise = Promise.all([renderAttributes(this._attributes), renderChildElements(this._childElements)])
         .then(() => {
           const promises = [];
           if (!calledFromFactory && this._childElements && Array.isArray(this._childElements)) {
